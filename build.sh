@@ -18,12 +18,12 @@ chmod a+x bin/repo
 export PATH="$(realpath .)/bin:$PATH"
 cd android/lineage
 export PATH="$(realpath .)/prebuilts/sdk/tools/linux/bin/:$PATH"
-repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs --no-clone-bundle --depth 1
-repo sync -c --prune --force-sync --retry-fetches=8 -j $(nproc)
+repo init -u https://github.com/LineageOS/android.git -b lineage-24.0 --git-lfs --no-clone-bundle --depth 1
+repo sync -c --prune --force-sync --fail-fast --retry-fetches=8 -j 8
 sed -i 's/-$(LINEAGE_BUILDTYPE)/-jqssun/g' vendor/lineage/config/version.mk
 
 source build/envsetup.sh
-export AB_OTA_UPDATER=false ROOMSERVICE_BRANCHES="lineage-23.1 lineage-23.0"
+export AB_OTA_UPDATER=false ROOMSERVICE_BRANCHES="lineage-24.0 lineage-23.2"
 
 breakfast virtio_x86_64 userdebug
 m recoveryimage

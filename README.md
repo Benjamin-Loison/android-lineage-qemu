@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/jqssun/android-lineage-qemu/blob/main/LICENSE)
 [![build](https://img.shields.io/github/actions/workflow/status/jqssun/android-lineage-qemu/build.yml)](https://github.com/jqssun/android-lineage-qemu/actions/workflows/build.yml)
 
-[LineageOS](https://lineageos.org/Changelog-30/) builds for running Android VM on 
+[LineageOS](https://lineageos.org/Changelog-32/) builds for running Android VM on 
 - [any macOS/iOS device (via UTM)](https://wiki.lineageos.org/utm-vm-on-apple-silicon-mac), or 
 - [generic libvirt QEMU virtual machines](https://wiki.lineageos.org/libvirt-qemu#create-and-configure-the-virtual-machine-using-virt-manager)
 
@@ -72,6 +72,17 @@ fastboot -s tcp:$HOST_IP flash recovery recovery_*-userdebug.img
 
 Follow the [instructions to install an update package](#usage). Use the [Google apps package for the **Mobile**, **ARM64** variant](https://wiki.lineageos.org/gapps/#downloads) on `arm64` builds.
 
+For the `x86_64` virtual machine image, you may need to additionally resize the `product` partition while in `fastbootd`
+```shell
+fastboot -s tcp:$HOST_IP resize-logical-partition product 1610612736
+```
+
+To complete the resizing for the `x86_64` image, boot back into **LineageOS Recovery** and use
+```shell
+adb -s $HOST_IP:5555 shell e2fsck -fy /dev/block/mapper/product
+adb -s $HOST_IP:5555 shell resize2fs /dev/block/mapper/product
+```
+
 ### Installing Magisk
 
 To install [Magisk](https://github.com/topjohnwu/Magisk/releases/latest), download [`boot_arm64only.img`](https://github.com/jqssun/android-lineage-qemu/releases/latest/download/boot_arm64only.img) or [`boot_x86_64.img`](https://github.com/jqssun/android-lineage-qemu/releases/latest/download/boot_x86_64.img) from releases, and patch it on a running instance of this LineageOS build following the [instructions](https://topjohnwu.github.io/Magisk/install.html#patching-images). Pull the patched image `magisk_patched*.img` from the device, [put the device in `fastbootd`](#bypassing-signature-verification-in-recovery), then run
@@ -100,6 +111,7 @@ Run the following to set the platform-agnostic `QEMU_OPTS` first, and then apply
 ```shell
 read -r -d '' QEMU_OPTS << EOM
     -m 2048 \
+    -smp 2 \
     -device virtio-blk-pci,drive=vda,bootindex=0 \
     -device virtio-blk-pci,drive=vdb,bootindex=1 \
     -drive if=pflash,unit=1,file=$(find ./LineageOS_on_*.utm/Data/efi_vars.fd) \
@@ -144,7 +156,7 @@ qemu-system-aarch64 -machine virt -cpu max,pauth-impdef=on -accel tcg,tb-size=10
 ```
 - For faster Hypervisor framework (HVF) acceleration on Mac (Intel), use:
 ```shell
-qemu-system-x86_64 -machine q35 -cpu host -accel hvf $DARWIN_QEMU_OPTS
+qemu-system-x86_64 -machine q35 -vga none -cpu host -accel hvf $DARWIN_QEMU_OPTS
 ```
 
 ### Running on Linux
@@ -170,7 +182,7 @@ qemu-system-aarch64 -machine virt -cpu max,pauth-impdef=on -accel tcg,tb-size=10
 ```
 - For faster KVM acceleration on x86_64 Linux, use:
 ```shell
-qemu-system-x86_64 -machine q35 -cpu host -accel kvm $LINUX_QEMU_OPTS
+qemu-system-x86_64 -machine q35 -vga none -cpu host -accel kvm $LINUX_QEMU_OPTS
 ```
 
 ## Credits
